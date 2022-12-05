@@ -4,7 +4,6 @@ import pandas as pd
 import streamlit as st
 import numpy as np
 import plotly.express as px
-import matplotlib.pyplot as plt
 from datetime import datetime
 
 # Global settings
