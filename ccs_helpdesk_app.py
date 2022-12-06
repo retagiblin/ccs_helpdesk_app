@@ -4,7 +4,7 @@ import pandas as pd
 import streamlit as st
 import numpy as np
 import plotly.express as px
-import matplotlib.pyplot as plt
+import altair as alt
 from datetime import datetime
 
 # Global settings
@@ -72,26 +72,66 @@ tab1,tab2,tab3,tab4 = st.tabs([' Overview ', ' Team Member Contributions ', ' De
 
 # Tabs
 with tab1:
-    #st.write("<h4 style='text-align: center; color: gray;'>{temp}</h1>".format(temp = year), unsafe_allow_html=True)
 
-    col1, col2= st.columns(2)
-    with col1:
+    team_member_values = [' All'] + list(help_desk_data['Agent Assigned'].unique())
 
-        st.write('<p style="font-family:sans-serif; color:Navy; font-size: 20px;"> Open Tickets: <b>{temp1}</b></p>'.format(temp1 = open_tickets), unsafe_allow_html=True)
-        st.write('<p style="font-family:sans-serif; color:Navy; font-size: 20px;"> Closed Tickets: <b>{temp2}<b/></p>'.format(temp2 = closed_tickets), unsafe_allow_html=True)
+    team_members_cleaned = []
+    for item in team_member_values: 
+        if str(item) != 'nan':
+            team_members_cleaned.append(item)
 
-    with col2:
+    team_members_cleaned = sorted(team_members_cleaned)
+    team_member = st.selectbox('To drill down to team member, select name:', team_members_cleaned)
 
-        st.write('<p style="font-family:sans-serif; color:Navy; font-size: 20px;">Resolved Tickets: <b>{temp3}</b></p>'.format(temp3 = resolved_tickets), unsafe_allow_html=True)
-        st.write('<p style="font-family:sans-serif; color:Navy; font-size: 20px;">Total Tickets: <b>{temp4}<b/></p>'.format(temp4 = ticket_count), unsafe_allow_html=True)
+    if team_member == " All":
 
-    fig = px.histogram(data_frame=help_desk_data, x='Time_to_Close', title="Count of Tickets by Number of Days to Close",
-    labels=dict(Time_to_Close="Number of Days to Close" ), color_discrete_sequence=['navy'],
-    width=500, height=500,)
-    labels = ["<= 1","1+", "2", "3", "4", "5", "6", "7", "8", "9", "10","11","12", "13", ">= 14"]
-    fig.update_xaxes(tickvals=np.arange(15), ticktext=labels)
-    fig.update_layout(title_x=0.5)
-    st.plotly_chart(fig, use_container_width=True)
+        col1, col2= st.columns(2)
+        with col1:
+
+            st.write('<p style="font-family:sans-serif; color:Navy; font-size: 20px;"> Open Tickets: <b>{temp1}</b></p>'.format(temp1 = open_tickets), unsafe_allow_html=True)
+            st.write('<p style="font-family:sans-serif; color:Navy; font-size: 20px;"> Closed Tickets: <b>{temp2}<b/></p>'.format(temp2 = closed_tickets), unsafe_allow_html=True)
+
+        with col2:
+
+            st.write('<p style="font-family:sans-serif; color:Navy; font-size: 20px;">Resolved Tickets: <b>{temp3}</b></p>'.format(temp3 = resolved_tickets), unsafe_allow_html=True)
+            st.write('<p style="font-family:sans-serif; color:Navy; font-size: 20px;">Total Tickets: <b>{temp4}<b/></p>'.format(temp4 = ticket_count), unsafe_allow_html=True)
+
+        fig = px.histogram(data_frame=help_desk_data, x='Time_to_Close', title="Count of Tickets by Number of Days to Close",
+        labels=dict(Time_to_Close="Number of Days to Close" ), color_discrete_sequence=['navy'],
+        width=500, height=500,)
+        labels = ["<= 1","1+", "2", "3", "4", "5", "6", "7", "8", "9", "10","11","12", "13", ">= 14"]
+        fig.update_xaxes(tickvals=np.arange(15), ticktext=labels)
+        fig.update_layout(title_x=0.5)
+        st.plotly_chart(fig, use_container_width=True)
+
+    else:
+
+        #count occurrences for individual selected
+        open_tickets = np.sum((help_desk_data['Current Status'] == "Open") & (help_desk_data['Agent Assigned'] == team_member))
+        closed_tickets = np.sum((help_desk_data['Current Status'] == "Closed") & (help_desk_data['Agent Assigned'] == team_member))
+        resolved_tickets = np.sum((help_desk_data['Current Status'] == "Resolved") & (help_desk_data['Agent Assigned'] == team_member))
+        ticket_count = np.sum((help_desk_data['Agent Assigned'] == team_member))
+        filtered_df_by_agent = help_desk_data.loc[help_desk_data['Agent Assigned'] == team_member]
+
+        col1, col2= st.columns(2)
+        with col1:
+
+            st.write('<p style="font-family:sans-serif; color:Navy; font-size: 20px;"> Open Tickets: <b>{temp1}</b></p>'.format(temp1 = open_tickets), unsafe_allow_html=True)
+            st.write('<p style="font-family:sans-serif; color:Navy; font-size: 20px;"> Closed Tickets: <b>{temp2}<b/></p>'.format(temp2 = closed_tickets), unsafe_allow_html=True)
+
+        with col2:
+
+            st.write('<p style="font-family:sans-serif; color:Navy; font-size: 20px;">Resolved Tickets: <b>{temp3}</b></p>'.format(temp3 = resolved_tickets), unsafe_allow_html=True)
+            st.write('<p style="font-family:sans-serif; color:Navy; font-size: 20px;">Total Tickets: <b>{temp4}<b/></p>'.format(temp4 = ticket_count), unsafe_allow_html=True)
+
+        fig = px.histogram(data_frame=filtered_df_by_agent, x='Time_to_Close', title="Count of Tickets by Number of Days to Close",
+        labels=dict(Time_to_Close="Number of Days to Close" ), color_discrete_sequence=['navy'],
+        width=500, height=500,)
+        labels = ["<= 1","1+", "2", "3", "4", "5", "6", "7", "8", "9", "10","11","12", "13", ">= 14"]
+        fig.update_xaxes(tickvals=np.arange(15), ticktext=labels)
+        fig.update_layout(title_x=0.5)
+        st.plotly_chart(fig, use_container_width=True)
+
 
 with tab2:
     st.subheader("Team Member Contributions")
@@ -99,12 +139,12 @@ with tab2:
     if year == "all years":
 
         #Bar Chart
-        
         fig2 = px.bar(help_desk_data, x=help_desk_data["Agent Assigned"].value_counts(), y=help_desk_data["Agent Assigned"].value_counts().index, orientation='h', title=year)
         fig2.update_traces(marker_color='gold')
         fig2.update_layout(title_x=0.5,
         xaxis_title="Count of Tickets",
-        yaxis_title="Team Member")
+        yaxis_title="Team Member",
+        yaxis={'categoryorder': 'total ascending'} )
         st.plotly_chart(fig2, use_container_width=True)
 
     else:
@@ -114,28 +154,47 @@ with tab2:
         fig2.update_traces(marker_color='gold')
         fig2.update_layout(title_x=0.5,
         xaxis_title="Count of Tickets",
-        yaxis_title="Team Member")
+        yaxis_title="Team Member",
+        yaxis={'categoryorder': 'total ascending'})
         st.plotly_chart(fig2, use_container_width=True)
 
 with tab3:
     st.subheader("Tickets by Department")
 
-    # Pie Chart
-    fig3 = px.pie(help_desk_data, values=help_desk_data['Department'].value_counts(), names=help_desk_data['Department'].value_counts().index, title=year)
-    fig3.update_layout(title_x=0.5)
+    # Bar Chart
+    fig3 = px.bar(help_desk_data, x=help_desk_data['Department'].value_counts(), y=help_desk_data['Department'].value_counts().index, title=year)
+    fig3.update_traces(marker_color='steelblue')
+    fig3.update_layout(title_x=0.5,
+    xaxis_title="Count of Tickets",
+    yaxis_title="Department",
+    yaxis={'categoryorder': 'total ascending'})
     st.plotly_chart(fig3, use_container_width=True)
+
+
+    # Pie Chart
+    #fig3 = px.pie(help_desk_data, values=help_desk_data['Department'].value_counts(), names=help_desk_data['Department'].value_counts().index, title=year)
+    #fig3.update_layout(title_x=0.5)
+    #st.plotly_chart(fig3, use_container_width=True)
 
 with tab4:
     st.subheader("Yearly Ticket Trends")
+    dept_values = ['All'] + list(help_desk_data['Department'].unique())
+    dept_values = sorted(dept_values)
+    dept = st.selectbox('To drill down by department, select department from list:', dept_values)
 
     if year == 'all years':
         
-        ts_df = [pd.to_datetime(all_help_desk_data["Date Created"]).dt.year.rename('year'), pd.to_datetime(all_help_desk_data["Date Created"]).dt.month.rename('month')]
+        ts_df = [pd.to_datetime(all_help_desk_data["Date Created"]).dt.year.rename('year'), pd.to_datetime(all_help_desk_data["Date Created"]).dt.month.rename('month'), all_help_desk_data["Department"]]
         ts_df = pd.DataFrame(ts_df)
         ts_df = pd.DataFrame.transpose(ts_df)
-        ts_df_count =(ts_df.groupby(['year','month'])['month'].count())
-        ts_df_count = pd.DataFrame(ts_df_count).reindex()
 
+        if dept != 'All': 
+            ts_df_dept = ts_df.loc[ts_df['Department'] == dept]
+        else:
+            ts_df_dept = ts_df
+        
+        ts_df_count =(ts_df_dept.groupby(['year','month'])['month'].count())
+        ts_df_count = pd.DataFrame(ts_df_count).reindex()
         ts_df_count = ts_df_count.rename(columns={'month': 'Count of Tickets'})
 
         fig4 =  px.line(data_frame=ts_df_count, x= ts_df_count.index.get_level_values(1), y="Count of Tickets", color=ts_df_count.index.get_level_values(0),
@@ -145,7 +204,13 @@ with tab4:
         st.plotly_chart(fig4, use_container_width=True)
 
     else:
-        ts_s = pd.to_datetime(help_desk_data["Date Created"], errors='coerce').dt.month.astype(object).value_counts().sort_index()
+
+        if dept != 'All': 
+            help_desk_data_dept = help_desk_data.loc[help_desk_data['Department'] == dept]
+        else:
+            help_desk_data_dept = help_desk_data
+
+        ts_s = pd.to_datetime(help_desk_data_dept["Date Created"], errors='coerce').dt.month.astype(object).value_counts().sort_index()
         ts_df = pd.DataFrame(ts_s)
         ts_df.columns = ['Count of Tickets']
 
@@ -153,5 +218,3 @@ with tab4:
         fig4.update_layout(title_x=0.5)
         fig4.update_xaxes(nticks=12)
         st.plotly_chart(fig4, use_container_width=True)
-
-
