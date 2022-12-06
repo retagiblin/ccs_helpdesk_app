@@ -25,7 +25,7 @@ unique_years = years.unique()
 opt = np.append(["all years"],unique_years)
 
 year = st.sidebar.selectbox("Please select a year:", opt)
-st.sidebar.image("..\HelpDeskVertical.jpg", use_column_width=True)
+st.sidebar.image("HelpDeskVertical.jpg", use_column_width=True)
 
 # Preprocessing
 # get total count of records  
