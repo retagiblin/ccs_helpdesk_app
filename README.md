@@ -1,6 +1,6 @@
 # ccs_helpdesk_app
 
-This application was developed for the class Visual Analytics in the Master of Data Science program at the University of North Carolina at Charlotte.  The application uses real data from the IT deparment at a church & school where I worked for several years.  
+This application was developed for the class Visual Analytics in the Master of Data Science program at the University of North Carolina at Charlotte.  The application uses real data from the IT department at a church & school where I worked for several years.  
 
 This application is theoretically for the Director of IT to analyze the IT departments help desk tickets, either for a specific year or for all time.
 
